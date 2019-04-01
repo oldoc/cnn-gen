@@ -294,7 +294,7 @@ def run(config):
             if epoch % evaluate_and_print_interval == (evaluate_and_print_interval - 1):
                 fitness_evaluate = eval_fitness(net, evaluateloader, 0, torch_batch_size, 0, gpu)
                 fitness_test = eval_fitness(net, testloader, 0, torch_batch_size, 0, gpu)
-                print('Epoch {3:d}: {0:3.3f}, {1:3.3f}'.format(fitness_evaluate, fitness_test, epoch))
+                print('Epoch {2:d}: {0:3.3f}, {1:3.3f}'.format(fitness_evaluate, fitness_test, epoch))
                 ep = open("epoch.csv", "a")
                 ep.write("{0:d}, {1:3.3f}, {2:3.3f}, {3:3.6f}\n".format(epoch, fitness_evaluate, fitness_test, lr))
                 ep.close()
