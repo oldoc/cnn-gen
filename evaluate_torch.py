@@ -5,13 +5,12 @@ Created on 2018-12-04 10:23:06
 @author: AN Zhulin
 """
 
-# TODO: add connection form input to the first num_dense_layer layers in NEAT!
 import sys,os
 curPath = os.path.abspath(os.path.dirname(__file__))
 parentPath = os.path.split(curPath)[0]
 rootPath = os.path.split(parentPath)[0]
 sys.path.append(rootPath)
-sys.path.append(rootPath+"/neat-cnn")
+sys.path.append(rootPath+"/cnn-gen")
 
 import torch
 import torch.nn as nn

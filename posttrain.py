@@ -3,7 +3,7 @@ curPath = os.path.abspath(os.path.dirname(__file__))
 parentPath = os.path.split(curPath)[0]
 rootPath = os.path.split(parentPath)[0]
 sys.path.append(rootPath)
-sys.path.append(rootPath+"/neat-cnn")
+sys.path.append(rootPath+"/cnn-gen")
 
 # import numpy as np
 from random import random
@@ -95,21 +95,6 @@ transform_test = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(cifar_norm_mean, cifar_norm_std),
 ])
-
-'''
-# Data normalization
-transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
-
-transform_test = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
-'''
 
 torch_batch_size = 100
 
