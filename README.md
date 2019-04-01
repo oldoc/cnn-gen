@@ -1,2 +1,2 @@
 # cnn-gen
-Generate CNN automaticlly
+Generate CNN automatically
