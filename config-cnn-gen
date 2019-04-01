@@ -1,0 +1,15 @@
+#--- parameters for the cnn-gen ---#
+
+[cnn-gen]
+pop_size                = 1
+num_inputs              = 3
+num_outputs             = 10
+num_layer               = 30
+num_cnn_layer           = 28
+input_size              = 32
+init_channel_num        = 16
+num_downsampling        = 4
+num_dense_layer         = 4
+init_learning_rate      = 0.001
+lr_reduce_times         = 3
+max_epoch               = 2
