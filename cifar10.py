@@ -90,7 +90,7 @@ torch_batch_size = 100
 
 gpu = False
 
-best_on_test_set = 0.8
+best_sum_on_evaluate_set = 0
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                         download=True, transform=transform_train)
@@ -196,7 +196,7 @@ def run(config):
 
     global gpu
     global first_time
-    global best_on_test_set
+    best_precision_sum_on_evaluate_set = 0
 
     best_every_generation = list()
 
@@ -237,6 +237,8 @@ def run(config):
         evaluate_and_print_interval = 10
 
         training = True
+
+        this_precision_sum_on_evaluate_set = 0
         while training and epoch < max_epoch:  # loop over the dataset multiple times
             net.train()
             epoch += 1
@@ -291,28 +293,30 @@ def run(config):
                     print(i, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                           % (running_loss / (i + 1), 100. * correct / total, correct, total))
 
-            if epoch % evaluate_and_print_interval == (evaluate_and_print_interval - 1):
-                fitness_evaluate = eval_fitness(net, evaluateloader, 0, torch_batch_size, 0, gpu)
-                fitness_test = eval_fitness(net, testloader, 0, torch_batch_size, 0, gpu)
-                print('Epoch {2:d}: {0:3.3f}, {1:3.3f}'.format(fitness_evaluate, fitness_test, epoch))
-                ep = open("epoch.csv", "a")
-                ep.write("{0:d}, {1:3.3f}, {2:3.3f}, {3:3.6f}\n".format(epoch, fitness_evaluate, fitness_test, lr))
-                ep.close()
+            #if epoch % evaluate_and_print_interval == (evaluate_and_print_interval - 1):
+            fitness_evaluate = eval_fitness(net, evaluateloader, 0, torch_batch_size, 0, gpu)
+            fitness_test = eval_fitness(net, testloader, 0, torch_batch_size, 0, gpu)
+            this_precision_sum_on_evaluate_set += fitness_evaluate
+            print('Epoch {2:d}: {0:3.3f}, {1:3.3f}'.format(fitness_evaluate, fitness_test, epoch))
+            ep = open("epoch.csv", "a")
+            ep.write("{0:d}, {1:3.3f}, {2:3.3f}, {3:3.6f}\n".format(epoch, fitness_evaluate, fitness_test, lr))
+            ep.close()
             # reload run parameters
 
         print('Finished Training')
 
         fitness_train = eval_fitness(net, trainloader, 0, torch_batch_size, 0, gpu)
-        fitness_evaluate = eval_fitness(net, evaluateloader, 0, torch_batch_size, 0, gpu)
-        fitness_test = eval_fitness(net, testloader, 0, torch_batch_size, 0, gpu)
+        #fitness_evaluate = eval_fitness(net, evaluateloader, 0, torch_batch_size, 0, gpu)
+        #fitness_test = eval_fitness(net, testloader, 0, torch_batch_size, 0, gpu)
 
         # Save the best net on test set
         # Should save the best on evaluate set
-        if fitness_test > best_on_test_set:
-            best_on_test_set = fitness_test
+        if this_precision_sum_on_evaluate_set > best_precision_sum_on_evaluate_set:
+            print("New best found: {0:3.5f}".format(this_precision_sum_on_evaluate_set))
+            best_precision_sum_on_evaluate_set = this_precision_sum_on_evaluate_set
             torch.save(net, "best.pkl")
 
-        print('After: {0:3.3f}, {1:3.3f}, {2:3.3f}, {3}\n'.format(fitness_train, fitness_evaluate, fitness_test, j))
+        print('After: {0:3.5f}, {1:3.5f}, {2:3.5f}, {3}\n'.format(fitness_train, fitness_evaluate, fitness_test, j))
 
 # Load configuration.
 config = config.Config('config-cnn-gen')
