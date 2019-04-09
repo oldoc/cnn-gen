@@ -231,7 +231,7 @@ def posttrain():
 
     #comp = open("comp.csv", "a")
     #comp.write('{0},{1:3.3f},'.format(j, fit))
-    print('Before: {0:3.3f}'.format(fit))
+    print('Before: {0:3.5f}'.format(fit))
 
     # train the network
     epoch = 0
@@ -318,7 +318,7 @@ def posttrain():
             best_on_test_set = fitness_test
             torch.save(net, "posttrain-best.pkl")
 
-        print('Epoch {1:d}: {0:3.3f}'.format(fitness_test, epoch))
+        print('Epoch {1:d}: {0:3.5f}'.format(fitness_test, epoch))
         ep = open("posttrain-epoch.csv", "a")
         ep.write(
             "{0:d}, {1:3.3f}, {2:3.6f}\n".format(epoch, fitness_test, lr))
