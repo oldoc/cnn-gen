@@ -255,18 +255,18 @@ def posttrain():
         correct = 0
         total = 0
 
-        #cur_lr = get_adjusted_lr(epoch = epoch, eta_max=max_lr)
-        #optimizer = optim.SGD(net.parameters(), cur_lr, momentum=0.9, weight_decay=1e-4, nesterov=True)
-        print('Epoch {0}: {1:1.8f}'.format(epoch, lr))
+        cur_lr = get_adjusted_lr(epoch = epoch, eta_max=lr)
+        optimizer = optim.SGD(net.parameters(), cur_lr, momentum=0.9, weight_decay=1e-4, nesterov=True)
+        print('Epoch {0}: {1:1.8f}'.format(epoch, cur_lr))
 
         #print('Epoch: %d' % epoch)
 
-
+        '''
         if lr_reduce and (train_epoch > lr_total_reduce_times) and (epoch % (train_epoch // lr_total_reduce_times) == 0):
             lr /= 10
             optimizer = optim.SGD(net.parameters(), lr, momentum=0.9)
             print("Learning rate set to: {0:1.8f}".format(lr))
-
+        '''
         mixup = True # If use mixup or not
 
         for i, data in enumerate(trainloader, 0):
@@ -321,7 +321,7 @@ def posttrain():
         print('Epoch {1:d}: {0:3.5f}'.format(fitness_test, epoch))
         ep = open("posttrain-epoch.csv", "a")
         ep.write(
-            "{0:d}, {1:3.3f}, {2:3.6f}\n".format(epoch, fitness_test, lr))
+            "{0:d}, {1:3.5f}, {2:3.6f}\n".format(epoch, fitness_test, cur_lr))
         ep.close()
         # reload run parameters
 
@@ -330,6 +330,6 @@ def posttrain():
     fitness_train = eval_fitness(net, trainloader, 0, torch_batch_size, 0, gpu)
     fitness_test = eval_fitness(net, testloader, 0, torch_batch_size, 0, gpu)
 
-    print('After: {0:3.3f}, {1:3.3f}\n'.format(fitness_train, fitness_test))
+    print('After: {0:3.5f}, {1:3.5f}\n'.format(fitness_train, fitness_test))
 
 posttrain()
