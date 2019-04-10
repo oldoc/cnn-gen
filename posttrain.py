@@ -26,6 +26,8 @@ transform = transforms.Compose(
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 """
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 # Cutout data enhance
 class Cutout(object):
     """Randomly mask out one or more patches from an image.
@@ -267,6 +269,7 @@ def posttrain():
             optimizer = optim.SGD(net.parameters(), lr, momentum=0.9)
             print("Learning rate set to: {0:1.8f}".format(lr))
         '''
+
         mixup = True # If use mixup or not
 
         for i, data in enumerate(trainloader, 0):
@@ -321,7 +324,7 @@ def posttrain():
         print('Epoch {1:d}: {0:3.5f}'.format(fitness_test, epoch))
         ep = open("posttrain-epoch.csv", "a")
         ep.write(
-            "{0:d}, {1:3.5f}, {2:3.6f}\n".format(epoch, fitness_test, cur_lr))
+            "{0:d}, {1:3.5f}, {2:3.8f}\n".format(epoch, fitness_test, lr))
         ep.close()
         # reload run parameters
 
