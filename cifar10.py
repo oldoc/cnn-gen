@@ -20,6 +20,9 @@ import numpy as np
 
 import evaluate_torch
 import config
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
 """
 transform = transforms.Compose(
     [transforms.ToTensor(),

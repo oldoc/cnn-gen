@@ -26,7 +26,7 @@ transform = transforms.Compose(
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 """
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 # Cutout data enhance
 class Cutout(object):
@@ -104,7 +104,9 @@ gpu = False
 
 first_time = True
 
-best_on_test_set = 0.9
+best_on_test_set = 0
+
+use_sgdr = True
 
 #net_dict = {}
 
@@ -257,18 +259,18 @@ def posttrain():
         correct = 0
         total = 0
 
-        cur_lr = get_adjusted_lr(epoch = epoch, eta_max=lr)
-        optimizer = optim.SGD(net.parameters(), cur_lr, momentum=0.9, weight_decay=1e-4, nesterov=True)
-        print('Epoch {0}: {1:1.8f}'.format(epoch, cur_lr))
+        if use_sgdr:
+            cur_lr = get_adjusted_lr(epoch = epoch, eta_max=lr)
+            optimizer = optim.SGD(net.parameters(), cur_lr, momentum=0.9, weight_decay=1e-4, nesterov=True)
+            print('Epoch {0}: {1:1.8f}'.format(epoch, cur_lr))
+        else:
+            print('Epoch {0}: {1:1.8f}'.format(epoch, lr))
 
-        #print('Epoch: %d' % epoch)
-
-        '''
-        if lr_reduce and (train_epoch > lr_total_reduce_times) and (epoch % (train_epoch // lr_total_reduce_times) == 0):
+        if not(use_sgdr) and (train_epoch > lr_total_reduce_times) and (epoch % (train_epoch // lr_total_reduce_times) == 0):
             lr /= 10
             optimizer = optim.SGD(net.parameters(), lr, momentum=0.9)
             print("Learning rate set to: {0:1.8f}".format(lr))
-        '''
+        
 
         mixup = True # If use mixup or not
 
@@ -323,8 +325,10 @@ def posttrain():
 
         print('Epoch {1:d}: {0:3.5f}'.format(fitness_test, epoch))
         ep = open("posttrain-epoch.csv", "a")
-        ep.write(
-            "{0:d}, {1:3.5f}, {2:3.8f}\n".format(epoch, fitness_test, lr))
+        if use_sgdr:
+            ep.write("{0:d}, {1:3.5f}, {2:3.8f}\n".format(epoch, fitness_test, cur_lr))
+        else:
+            ep.write("{0:d}, {1:3.5f}, {2:3.8f}\n".format(epoch, fitness_test, lr))
         ep.close()
         # reload run parameters
 
