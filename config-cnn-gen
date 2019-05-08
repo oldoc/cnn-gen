@@ -1,7 +1,7 @@
 #--- parameters for the cnn-gen ---#
 
 [cnn-gen]
-pop_size                = 100
+pop_size                = 1
 num_inputs              = 3
 num_outputs             = 10
 num_layer               = 30

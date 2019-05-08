@@ -15,7 +15,8 @@ sys.path.append(rootPath+"/cnn-gen")
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
+
+from dropblock import DropBlock2D, LinearScheduler
 
 shuffle = True
 
@@ -37,8 +38,15 @@ class cnn_block(nn.Module):
     num_dense_layer = 0
 
     '''Depthwise conv + Pointwise conv'''
-    def __init__(self, downsampling_time, num_dense_layer, in_planes, out_planes, stride=1):
+    def __init__(self, downsampling_time, num_dense_layer, in_planes, out_planes, stride=1, drop_prob=0.2, block_size=3):
         super(cnn_block, self).__init__()
+
+        self.dropblock = LinearScheduler(
+            DropBlock2D(drop_prob=drop_prob, block_size=block_size),
+            start_value=0.,
+            stop_value=drop_prob,
+            nr_steps=5e3
+        )
 
         global shuffle
 
@@ -75,13 +83,15 @@ class cnn_block(nn.Module):
 
     def forward(self, x):
 
+        self.dropblock.step()
+
         layer_num = len(self.layerout)
 
         if layer_num == 0:
 
-            out = self.conv1(F.relu(self.bn1(x)))
-            out = self.conv2(F.relu(self.bn2(out)))
-            out = self.conv3(F.relu(self.bn3(out)))
+            out = self.dropblock(self.conv1(F.relu(self.bn1(x))))
+            out = self.dropblock(self.conv2(F.relu(self.bn2(out))))
+            out = self.dropblock(self.conv3(F.relu(self.bn3(out))))
 
             self.layerout.append(x)
             self.layerout.append(out)
@@ -122,13 +132,13 @@ class cnn_block(nn.Module):
                     input = torch.cat([input, former_layers[i]], 1)
 
             if shuffle:
-                out = self.conv1(F.relu(self.bn1(input)))
-                out = self.conv2(F.relu(self.bn2(out)))
+                out = self.dropblock(self.conv1(F.relu(self.bn1(input))))
+                out = self.dropblock(self.conv2(F.relu(self.bn2(out))))
                 out = self.shuffle(out)
-                out = self.conv3(F.relu(self.bn3(out)))
+                out = self.dropblock(self.conv3(F.relu(self.bn3(out))))
             else:
-                out = self.conv1(F.relu(self.bn1(input)))
-                out = self.conv2(F.relu(self.bn2(out)))
+                out = self.dropblock(self.conv1(F.relu(self.bn1(input))))
+                out = self.dropblock(self.conv2(F.relu(self.bn2(out))))
 
             self.layerout.append(out)
 
