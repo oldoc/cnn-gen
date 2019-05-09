@@ -106,7 +106,7 @@ first_time = True
 
 best_on_test_set = 0
 
-use_sgdr = True
+use_sgdr = False
 
 #net_dict = {}
 
