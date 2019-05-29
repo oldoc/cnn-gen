@@ -144,7 +144,10 @@ class Config(object):
                 ConfigParameter('num_dense_layer', int),
                 ConfigParameter('init_learning_rate', float),
                 ConfigParameter('lr_reduce_times', int),
-                ConfigParameter('max_epoch', int)]
+                ConfigParameter('max_epoch', int),
+                ConfigParameter('sgdr_t0', int),
+                ConfigParameter('sgdr_t_mult', int),
+                ConfigParameter('sgdr_epoch', int)]
 
     def __init__(self, filename):
 

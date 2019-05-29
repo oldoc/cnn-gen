@@ -20,13 +20,9 @@ import torch.optim as optim
 import numpy as np
 
 import evaluate_torch
-"""
-transform = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-"""
+import config
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 # Cutout data enhance
 class Cutout(object):
@@ -121,6 +117,16 @@ testset = torchvision.datasets.CIFAR10(root='./data', train=False,
 testloader = torch.utils.data.DataLoader(testset, batch_size=torch_batch_size,
                                          shuffle=False, num_workers=2)
 
+'''
+if args.resume:
+    # Load checkpoint.
+    print('==> Resuming from checkpoint..')
+    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+    checkpoint = torch.load('./checkpoint/ckpt.t7')
+    net.load_state_dict(checkpoint['net'])
+    best_acc = checkpoint['acc']
+    start_epoch = checkpoint['epoch']
+'''
 
 # 第epoch值进行计算并更新学习率
 def get_adjusted_lr(epoch, T_0=5, T_mult=2, eta_max=0.1, eta_min=0.):
@@ -149,6 +155,9 @@ def mixup_data(x, y, alpha=1.0, use_cuda=True):
 
 def mixup_criterion(criterion, pred, y_a, y_b, lam):
     return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
+
+def get_layer_param(model):
+    return sum([torch.numel(param) for param in model.parameters()])
 
 # evaluate the fitness
 # batch_size = 0 means evaluate until reach the end of the evaluate set
@@ -194,7 +203,7 @@ def eval_fitness(net, loader, batch_size, torch_batch_size, start, gpu):
 
     return (hit_count.item() / total)
 
-def posttrain():
+def train(config, use_sgdr):
 
     global gpu
     global first_time
@@ -209,21 +218,15 @@ def posttrain():
         gpu = False
         print("Running on CPU!")
 
-    net = torch.load("best.pkl")
-
-    # load lr and epoch
-    lrfile = open("posttrain-lr.txt", "r")
-    tmp = lrfile.readline().rstrip('\n')
-    lr = float(tmp)
-    tmp = lrfile.readline().rstrip('\n')
-    max_epoch = int(tmp)
-
     if use_sgdr:
-        tmp = lrfile.readline().rstrip('\n')
-        max_epoch = int(tmp)
-    lrfile.close()
-
+        max_epoch = config.sgdr_epoch
+    else:
+        max_epoch = config.max_epoch
     print(max_epoch)
+
+    ep = open("epoch.csv", "a")
+    ep.write("init_channel_num, {0:d}, num_layer, {1:d}, num_dense_layer, {2:d}\n".format(config.init_channel_num, config.num_layer, config.num_dense_layer))
+    ep.close()
 
     if gpu:
         net.cuda()
@@ -231,7 +234,7 @@ def posttrain():
     net.train()
 
     criterion = nn.CrossEntropyLoss()  # use a Classification Cross-Entropy loss
-    optimizer = optim.SGD(net.parameters(), lr, momentum=0.9, weight_decay=5e-4)
+    optimizer = optim.SGD(net.parameters(), config.init_learning_rate, momentum=0.9, weight_decay=5e-4)
 
     # Evalute the fitness before trainning
     evaluate_batch_size = 0
@@ -257,6 +260,7 @@ def posttrain():
 
     training = True
     train_epoch = max_epoch
+    lr = config.init_learning_rate
     while training and epoch < train_epoch:  # loop over the dataset multiple times
         # for epoch in range(10):
         net.train()
@@ -266,7 +270,7 @@ def posttrain():
         total = 0
 
         if use_sgdr:
-            cur_lr = get_adjusted_lr(epoch = epoch, eta_max=lr)
+            cur_lr = get_adjusted_lr(epoch = epoch, T_0=config.sgdr_t0, T_mult=config.sgdr_t_mult, eta_max=config.init_learning_rate)
             optimizer = optim.SGD(net.parameters(), cur_lr, momentum=0.9, weight_decay=1e-4, nesterov=True)
             print('Epoch {0}: {1:1.8f}'.format(epoch, cur_lr))
         else:
@@ -327,10 +331,10 @@ def posttrain():
         #save the best net on test set
         if fitness_test > best_on_test_set:
             best_on_test_set = fitness_test
-            torch.save(net, "posttrain-best.pkl")
+            torch.save(net, "best.pkl")
 
         print('Epoch {1:d}: {0:3.5f}'.format(fitness_test, epoch))
-        ep = open("posttrain-epoch.csv", "a")
+        ep = open("epoch.csv", "a")
         if use_sgdr:
             ep.write("{0:d}, {1:3.5f}, {2:3.8f}\n".format(epoch, fitness_test, cur_lr))
         else:
@@ -345,4 +349,27 @@ def posttrain():
 
     print('After: {0:3.5f}, {1:3.5f}\n'.format(fitness_train, fitness_test))
 
-posttrain()
+    torch.save(net, str(config.init_channel_num)+"-"+str(config.num_layer)+"-"+"final.pkl")
+
+# Load configuration.
+config = config.Config('config-cnn-gen')
+
+para = [(8, 15),  (8, 20),  (8, 25),  (8, 30),
+        (16, 15), (16, 20), (16, 25), (16, 30),
+        (24, 15), (24, 20), (24, 25), (24, 30),
+        (32, 15), (32, 20), (32, 25), (32, 30)]
+
+while len(para):
+    channel, layer = para.pop(0)
+    config.init_channel_num = channel
+    config.num_layer = layer
+    config.num_cnn_layer = config.num_layer - 2
+    net = evaluate_torch.Net(config)
+    train(config, True)
+    train(config, True)
+
+'''
+if load_from_file:
+    net = torch.load("final.pkl")
+else:
+'''
