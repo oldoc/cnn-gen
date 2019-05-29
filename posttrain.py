@@ -26,7 +26,7 @@ transform = transforms.Compose(
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 """
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # Cutout data enhance
 class Cutout(object):
@@ -106,7 +106,7 @@ first_time = True
 
 best_on_test_set = 0
 
-use_sgdr = False
+use_sgdr = True
 
 #net_dict = {}
 
@@ -217,7 +217,13 @@ def posttrain():
     lr = float(tmp)
     tmp = lrfile.readline().rstrip('\n')
     max_epoch = int(tmp)
+
+    if use_sgdr:
+        tmp = lrfile.readline().rstrip('\n')
+        max_epoch = int(tmp)
     lrfile.close()
+
+    print(max_epoch)
 
     if gpu:
         net.cuda()

@@ -21,7 +21,7 @@ import numpy as np
 import evaluate_torch
 import config
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 """
 transform = transforms.Compose(
